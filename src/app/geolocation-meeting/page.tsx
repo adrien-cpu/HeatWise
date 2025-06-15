@@ -15,26 +15,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import dynamic from 'next/dynamic';
-import 'leaflet/dist/leaflet.css';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useRouter } from 'next/navigation';
+import { auth } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Import Leaflet components dynamically to avoid SSR issues
-const MapContainer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.MapContainer),
+// Import dynamique de la carte pour éviter les problèmes SSR
+const MapWithNoSSR = dynamic(
+  () => import('@/components/geolocation/Map').then(mod => mod.default),
+  { ssr: false, loading: () => <div>Chargement de la carte...</div> }
+);
+
+// Import dynamique des composants Marker et Popup
+const DynamicMarker = dynamic(
+  () => import('@/components/geolocation/Map').then(mod => mod.Marker),
   { ssr: false }
 );
 
-const TileLayer = dynamic(
-  () => import('react-leaflet').then((mod) => mod.TileLayer),
-  { ssr: false }
-);
-
-const Marker = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Marker),
-  { ssr: false }
-);
-
-const Popup = dynamic(
-  () => import('react-leaflet').then((mod) => mod.Popup),
+const DynamicPopup = dynamic(
+  () => import('@/components/geolocation/Map').then(mod => mod.Popup),
   { ssr: false }
 );
 
@@ -65,6 +65,12 @@ export default function GeolocationMeeting() {
     category: 'all',
   });
   const mapRef = useRef(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [meetingPlace, setMeetingPlace] = useState<Location | null>(null);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([0, 0]);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const { user } = useAuth();
 
   useEffect(() => {
     const initializeLocation = async () => {
@@ -169,245 +175,149 @@ export default function GeolocationMeeting() {
     });
   };
 
+  const handleSearch = async () => {
+    setIsLoading(true);
+    try {
+      const location = await getUserLocation(searchQuery);
+      setUserLocation(location);
+      setMeetingPlace(location);
+      setMapCenter([location.lat, location.lng]);
+      setError(null);
+    } catch (error: any) {
+      setError(t('geolocationError', { message: error.message }));
+      toast({
+        variant: "destructive",
+        title: t('geolocationErrorTitle'),
+        description: t('geolocationError', { message: error.message }),
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGetLocation = async () => {
+    setIsLoading(true);
+    try {
+      const location = await getUserLocation();
+      setUserLocation(location);
+      setMeetingPlace(location);
+      setMapCenter([location.lat, location.lng]);
+      setError(null);
+    } catch (error: any) {
+      setError(t('geolocationError', { message: error.message }));
+      toast({
+        variant: "destructive",
+        title: t('geolocationErrorTitle'),
+        description: t('geolocationError', { message: error.message }),
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleShareLocation = async () => {
+    if (!userLocation || !user) return;
+
+    try {
+      // Implémentation du partage de position
+      toast({
+        title: "Position partagée",
+        description: "Votre position a été partagée avec succès",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error.message,
+      });
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6 text-center">{t('title')}</h1>
+      <Card className="p-6">
+        <h1 className="text-2xl font-bold mb-4">Trouver un lieu de rencontre</h1>
 
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertTitle>{t('errorTitle')}</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>{t('mapTitle')}</CardTitle>
-              <CardDescription>{t('mapDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent className="h-[500px]">
-              {userLocation && (
-                <MapContainer
-                  center={[userLocation.lat, userLocation.lng]}
-                  zoom={13}
-                  style={{ height: '100%', width: '100%' }}
-                  ref={mapRef}
-                >
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="search">Rechercher un lieu</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Entrez une adresse..."
                   />
-                  {/* User location marker */}
-                  <Marker position={[userLocation.lat, userLocation.lng]}>
-                    <Popup>
-                      {t('yourLocation')}
-                    </Popup>
-                  </Marker>
-                  {/* Meeting places markers */}
-                  {filteredPlaces.map((place, index) => (
-                    <Marker key={`place-${index}`} position={[place.location.lat, place.location.lng]}>
-                      <Popup>
-                        <div className="p-2">
-                          <h3 className="font-bold">{place.name}</h3>
-                          <p className="text-sm">{place.description}</p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Star className="h-4 w-4 text-yellow-500" />
-                            <span className="text-sm">{place.rating} / 5</span>
-                          </div>
-                          <Button
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => handlePlaceSelect(place)}
-                          >
-                            {t('viewDetails')}
-                          </Button>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  ))}
-                  {/* Nearby users markers */}
-                  {nearbyUsers.map((user, index) => (
-                    <Marker key={`user-${index}`} position={[user.location.lat, user.location.lng]}>
-                      <Popup>
-                        <div className="p-2">
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
-                              <AvatarImage src={user.profilePicture} />
-                              <AvatarFallback>{user.name[0]}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="font-bold">{user.name}</h3>
-                              <p className="text-sm text-muted-foreground">{user.distance.toFixed(1)} km</p>
-                            </div>
-                          </div>
-                          {user.interests && (
-                            <div className="mt-2">
-                              <p className="text-sm font-medium">{t('interests')}</p>
-                              <div className="flex flex-wrap gap-1 mt-1">
-                                {user.interests.map((interest, i) => (
-                                  <Badge key={i} variant="secondary">{interest}</Badge>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          <Button
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => handleUserSelect(user)}
-                          >
-                            {t('viewProfile')}
-                          </Button>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  ))}
-                </MapContainer>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Filter className="h-5 w-5" />
-                {t('filters')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">{t('maxDistance')}</label>
-                <Slider
-                  value={[filters.maxDistance]}
-                  onValueChange={(value) => handleFilterChange('maxDistance', value[0])}
-                  max={20}
-                  step={1}
-                  className="mt-2"
-                />
-                <span className="text-sm text-muted-foreground">{filters.maxDistance} km</span>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">{t('category')}</label>
-                <Select
-                  value={filters.category}
-                  onValueChange={(value) => handleFilterChange('category', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('selectCategory')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t('allCategories')}</SelectItem>
-                    <SelectItem value="cafe">{t('cafe')}</SelectItem>
-                    <SelectItem value="restaurant">{t('restaurant')}</SelectItem>
-                    <SelectItem value="bar">{t('bar')}</SelectItem>
-                    <SelectItem value="park">{t('park')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {selectedPlace && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{selectedPlace.name}</CardTitle>
-                <CardDescription>{selectedPlace.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="info">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="info">{t('info')}</TabsTrigger>
-                    <TabsTrigger value="booking">{t('booking')}</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="info" className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      <span className="text-sm">{selectedPlace.address}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span className="text-sm">{selectedPlace.openingHours}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      <span className="text-sm">{selectedPlace.capacity} {t('people')}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Star className="h-4 w-4" />
-                      <span className="text-sm">{selectedPlace.rating} / 5</span>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="booking">
-                    <div className="space-y-4">
-                      {timeSlots.map((slot) => (
-                        <Button
-                          key={slot.id}
-                          variant={slot.available ? "outline" : "secondary"}
-                          className="w-full justify-between"
-                          disabled={!slot.available}
-                          onClick={() => handleTimeSlotSelect(slot)}
-                        >
-                          <span>{slot.start} - {slot.end}</span>
-                          <Badge variant={slot.available ? "default" : "secondary"}>
-                            {slot.available ? t('available') : t('booked')}
-                          </Badge>
-                        </Button>
-                      ))}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          )}
-
-          {selectedUser && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={selectedUser.profilePicture} />
-                    <AvatarFallback>{selectedUser.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <CardTitle>{selectedUser.name}</CardTitle>
-                    <CardDescription>{selectedUser.distance.toFixed(1)} km</CardDescription>
-                  </div>
+                  <Button onClick={handleSearch}>Rechercher</Button>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {selectedUser.interests && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">{t('interests')}</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedUser.interests.map((interest, index) => (
-                        <Badge key={index} variant="secondary">{interest}</Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {selectedUser.availability && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">{t('availability')}</h4>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span className="text-sm">
-                        {selectedUser.availability.start} - {selectedUser.availability.end}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <Button className="w-full" onClick={() => toast({ title: t('connectionRequestSent') })}>
-                  {t('connect')}
+              </div>
+
+              <div>
+                <Label>Votre position actuelle</Label>
+                <div className="text-sm text-gray-500">
+                  {userLocation ? (
+                    `${userLocation.lat.toFixed(6)}, ${userLocation.lng.toFixed(6)}`
+                  ) : (
+                    'Position non disponible'
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label>Lieu de rencontre</Label>
+                <div className="text-sm text-gray-500">
+                  {meetingPlace ? (
+                    `${meetingPlace.lat.toFixed(6)}, ${meetingPlace.lng.toFixed(6)}`
+                  ) : (
+                    'Aucun lieu sélectionné'
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleGetLocation}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Chargement...' : 'Obtenir ma position'}
                 </Button>
-              </CardContent>
-            </Card>
-          )}
+                <Button
+                  onClick={handleShareLocation}
+                  disabled={!userLocation || !user}
+                  variant="outline"
+                >
+                  Partager ma position
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="h-[400px] relative">
+            <MapWithNoSSR
+              center={mapCenter}
+              zoom={13}
+              style={{ height: '100%', width: '100%' }}
+            >
+              {userLocation && (
+                <DynamicMarker position={[userLocation.lat, userLocation.lng]}>
+                  <DynamicPopup>
+                    Votre position
+                  </DynamicPopup>
+                </DynamicMarker>
+              )}
+              {meetingPlace && (
+                <DynamicMarker position={[meetingPlace.lat, meetingPlace.lng]}>
+                  <DynamicPopup>
+                    Lieu de rencontre
+                  </DynamicPopup>
+                </DynamicMarker>
+              )}
+            </MapWithNoSSR>
+          </div>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

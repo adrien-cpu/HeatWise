@@ -8,8 +8,15 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { facialAnalysisService, FacialFeatures, CompatibilityScore } from '@/services/facialAnalysis';
 import { useToast } from '@/hooks/use-toast';
+import dynamic from 'next/dynamic';
 import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 import { FACEMESH_TESSELATION } from '@mediapipe/face_mesh';
+
+// Import MediaPipe components dynamically
+const MediaPipeComponents = dynamic(() => import('@/components/facial-analysis/MediaPipeComponents'), {
+    ssr: false,
+    loading: () => <div>Loading...</div>
+});
 
 export default function FacialAnalysisPage() {
     const t = useTranslations('FacialAnalysis');
@@ -199,7 +206,7 @@ export default function FacialAnalysisPage() {
                                 <Button
                                     onClick={stopCamera}
                                     disabled={!stream}
-                                    variant="outline"
+                                    variant="destructive"
                                     className="flex-1"
                                 >
                                     {t('camera.stop')}
@@ -210,83 +217,12 @@ export default function FacialAnalysisPage() {
                                 disabled={!stream || isAnalyzing}
                                 className="w-full"
                             >
-                                {isAnalyzing ? t('analysis.analyzing') : t('analysis.start')}
+                                {isAnalyzing ? t('analyzing') : t('analyze')}
                             </Button>
                         </CardContent>
                     </Card>
 
-                    {facialFeatures && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>{t('results.title')}</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div>
-                                    <h3 className="font-semibold mb-2">{t('results.emotions')}</h3>
-                                    <div className="space-y-2">
-                                        {Object.entries(facialFeatures.emotions).map(([emotion, value]) => (
-                                            <div key={emotion} className="space-y-1">
-                                                <div className="flex justify-between text-sm">
-                                                    <span>{t(`emotions.${emotion}`)}</span>
-                                                    <span>{Math.round(value * 100)}%</span>
-                                                </div>
-                                                <Progress value={value * 100} />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <h3 className="font-semibold mb-2">{t('results.attributes')}</h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">{t('attributes.age')}</p>
-                                            <p className="font-medium">{facialFeatures.attributes.age}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">{t('attributes.gender')}</p>
-                                            <p className="font-medium">{t(`genders.${facialFeatures.attributes.gender}`)}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">{t('attributes.smile')}</p>
-                                            <p className="font-medium">{Math.round(facialFeatures.attributes.smile * 100)}%</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-muted-foreground">{t('attributes.glasses')}</p>
-                                            <p className="font-medium">
-                                                {facialFeatures.attributes.glasses ? t('common.yes') : t('common.no')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {compatibilityScore && (
-                                    <div>
-                                        <h3 className="font-semibold mb-2">{t('results.compatibility')}</h3>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <div className="flex justify-between text-sm mb-1">
-                                                    <span>{t('compatibility.overall')}</span>
-                                                    <span>{Math.round(compatibilityScore.overall * 100)}%</span>
-                                                </div>
-                                                <Progress value={compatibilityScore.overall * 100} />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">{t('compatibility.facial')}</p>
-                                                    <p className="font-medium">{Math.round(compatibilityScore.facial * 100)}%</p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">{t('compatibility.psychological')}</p>
-                                                    <p className="font-medium">{Math.round(compatibilityScore.psychological * 100)}%</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    )}
+                    <MediaPipeComponents videoRef={videoRef} canvasRef={canvasRef} />
                 </div>
             )}
         </div>

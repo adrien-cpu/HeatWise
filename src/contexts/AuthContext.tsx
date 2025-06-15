@@ -1,7 +1,8 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { User } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { AlertTriangle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -11,59 +12,56 @@ import { useTranslations } from 'next-intl';
  * @description Type definition for the authentication context
  */
 interface AuthContextType {
-  user: any;
+  user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<any>;
   signup: (email: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  login: async () => { },
+  signup: async () => { },
+  logout: async () => { },
+});
 
 /**
  * @function AuthProvider
  * @description Provider component for authentication context
  */
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<any>(null);
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const t = useTranslations('Auth');
 
   useEffect(() => {
-    const session = supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
       setLoading(false);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+
+    return () => unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    setUser(data.user);
-    return data.user;
+    // Implementation of login using Firebase
+    // This is a placeholder and should be replaced with the actual implementation
+    throw new Error('Login functionality not implemented');
   };
 
   const signup = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
-    setUser(data.user);
-    return data.user;
+    // Implementation of signup using Firebase
+    // This is a placeholder and should be replaced with the actual implementation
+    throw new Error('Signup functionality not implemented');
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    toast({
-      title: t('logoutSuccessTitle'),
-      description: t('logoutSuccessDesc'),
-    });
+    // Implementation of logout using Firebase
+    // This is a placeholder and should be replaced with the actual implementation
+    throw new Error('Logout functionality not implemented');
   };
 
   return (
@@ -71,14 +69,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
 /**
- * @function useAuthContext
+ * @function useAuth
  * @description Custom hook to use the authentication context
  */
-export const useAuthContext = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuthContext must be used within an AuthProvider');
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
-};
+}
