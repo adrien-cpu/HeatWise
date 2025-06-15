@@ -17,7 +17,7 @@
     "@genkit-ai/next": "^1.0.4",
     "@hookform/resolvers": "^4.1.3",
     "@langchain/google-genai": "^0.2.5",
-    "@mediapipe/drawing_utils": "^0.3.1675466124",
+    "@mediapipe/drawing_utils": "^0.3.1620248074",
     "@mediapipe/face_mesh": "^0.4.1633559619",
     "@opentelemetry/exporter-jaeger": "^2.0.1",
     "@radix-ui/react-accordion": "^1.2.3",
