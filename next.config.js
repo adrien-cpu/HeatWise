@@ -21,6 +21,27 @@ const nextConfig = {
             type: 'asset/resource',
         });
 
+        // Handle Firebase and its dependencies
+        config.module.rules.push({
+            test: /\.js$/,
+            include: [
+                /node_modules\/@firebase/,
+                /node_modules\/firebase/,
+                /node_modules\/undici/
+            ],
+            use: {
+                loader: 'babel-loader',
+                options: {
+                    presets: ['@babel/preset-env'],
+                    plugins: [
+                        ['@babel/plugin-transform-private-methods', { loose: true }],
+                        ['@babel/plugin-transform-class-properties', { loose: true }],
+                        ['@babel/plugin-transform-private-property-in-object', { loose: true }]
+                    ]
+                }
+            }
+        });
+
         // Ignore specific modules that cause issues
         config.ignoreWarnings = [
             { module: /node_modules\/undici/ },
@@ -38,7 +59,9 @@ const nextConfig = {
         '@tensorflow/tfjs',
         '@tensorflow-models/face-landmarks-detection',
         '@tensorflow-models/face-detection',
-        'undici'
+        'undici',
+        '@firebase',
+        'firebase'
     ],
     // Ignore TypeScript errors during build
     typescript: {
