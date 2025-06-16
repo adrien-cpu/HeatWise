@@ -6,7 +6,7 @@
  *              Locale-specific providers and message loading are handled by the nested `src/app/[locale]/layout.tsx`.
  */
 
-import { Geist } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
 import { Inter } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
@@ -15,12 +15,6 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from '@/i18n';
 import { AuthProvider } from '@/contexts/AuthContext';
 import '../app/globals.css'
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-  display: 'swap',
-});
 
 const inter = Inter({
   subsets: ['latin'],
@@ -47,7 +41,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${inter.className} min-h-screen bg-background font-sans antialiased`}>
+      <body className={`${GeistSans.className} ${inter.className} min-h-screen bg-background font-sans antialiased`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeProvider
             attribute="class"
