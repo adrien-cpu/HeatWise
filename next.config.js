@@ -1,13 +1,12 @@
-
-import type {NextConfig} from 'next';
-import nextIntl from 'next-intl/plugin'; // Import the plugin
+const nextIntl = require('next-intl/plugin');
 
 // Wrap the config with the next-intl plugin
 // The path now points to the consolidated i18n configuration file.
 const withNextIntl = nextIntl('./src/i18n/settings.ts');
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
     // ...other configurations
 };
 
-export default withNextIntl(nextConfig); // Export the wrapped config
+module.exports = withNextIntl(nextConfig); 
