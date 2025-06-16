@@ -1,13 +1,14 @@
 'use client';
 
+import { useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Icon } from 'leaflet';
-import { useEffect } from 'react';
+import L from 'leaflet';
 
-// Fix for default marker icons in Leaflet with Next.js
-const defaultIcon = new Icon({
+// Correction pour les icônes Leaflet dans Next.js
+const defaultIcon = L.icon({
     iconUrl: '/images/marker-icon.png',
+    iconRetinaUrl: '/images/marker-icon-2x.png',
     shadowUrl: '/images/marker-shadow.png',
     iconSize: [25, 41],
     iconAnchor: [12, 41],
@@ -17,20 +18,15 @@ const defaultIcon = new Icon({
 
 interface MapProps {
     center: [number, number];
-    zoom: number;
+    zoom?: number;
     style?: React.CSSProperties;
     children?: React.ReactNode;
 }
 
-export default function Map({ center, zoom, style, children }: MapProps) {
+export default function Map({ center, zoom = 13, style = { height: '400px', width: '100%' }, children }: MapProps) {
     useEffect(() => {
-        // Fix for Leaflet marker icons in Next.js
-        delete (Icon.Default.prototype as any)._getIconUrl;
-        Icon.Default.mergeOptions({
-            iconRetinaUrl: '/images/marker-icon-2x.png',
-            iconUrl: '/images/marker-icon.png',
-            shadowUrl: '/images/marker-shadow.png',
-        });
+        // Correction pour les icônes Leaflet dans Next.js
+        L.Marker.prototype.options.icon = defaultIcon;
     }, []);
 
     return (

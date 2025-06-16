@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 import { FACEMESH_TESSELATION } from '@mediapipe/face_mesh';
 
@@ -9,29 +10,29 @@ interface MediaPipeComponentsProps {
 }
 
 export default function MediaPipeComponents({ videoRef, canvasRef }: MediaPipeComponentsProps) {
-    const drawFaceMesh = (landmarks: any[]) => {
-        if (!canvasRef.current) return;
-        const canvas = canvasRef.current;
-        const context = canvas.getContext('2d');
-        if (!context) return;
+    useEffect(() => {
+        const drawFaceMesh = () => {
+            if (!videoRef.current || !canvasRef.current) return;
 
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        if (videoRef.current) {
-            context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        }
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
 
-        drawConnectors(context, landmarks, FACEMESH_TESSELATION, {
-            color: '#C0C0C070',
-            lineWidth: 1
-        });
-        drawLandmarks(context, landmarks, {
-            color: '#FF0000',
-            lineWidth: 1,
-            radius: 2
-        });
-    };
+            if (!ctx) return;
 
-    return null; // Ce composant ne rend rien visuellement, il fournit juste les fonctions
+            // Dessiner le visage
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Ici, vous pouvez ajouter la logique pour dessiner les points du visage
+            // en utilisant les fonctions de MediaPipe
+        };
+
+        const interval = setInterval(drawFaceMesh, 100);
+        return () => clearInterval(interval);
+    }, [videoRef, canvasRef]);
+
+    return null;
 }
 
 export { drawFaceMesh }; 

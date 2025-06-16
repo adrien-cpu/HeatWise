@@ -232,7 +232,6 @@ export async function getConversationsListener(
     const conversations: Conversation[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      // Basic type check and default for unreadCounts
       const unreadCounts = data.unreadCounts && typeof data.unreadCounts === 'object' ? data.unreadCounts : {};
       conversations.push({
         id: doc.id,

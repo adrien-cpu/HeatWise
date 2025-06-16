@@ -21,10 +21,13 @@ import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Import dynamique de la carte pour éviter les problèmes SSR
+// Chargement dynamique des composants Leaflet
 const MapWithNoSSR = dynamic(
-  () => import('@/components/geolocation/Map').then(mod => mod.default),
-  { ssr: false, loading: () => <div>Chargement de la carte...</div> }
+  () => import('@/components/geolocation/Map'),
+  {
+    ssr: false,
+    loading: () => <div>Chargement de la carte...</div>
+  }
 );
 
 // Import dynamique des composants Marker et Popup
@@ -49,7 +52,7 @@ interface TimeSlot {
 export default function GeolocationMeeting() {
   const t = useTranslations('GeolocationMeeting');
   const { toast } = useToast();
-  const [userLocation, setUserLocation] = useState<Location | null>(null);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [meetingPlaces, setMeetingPlaces] = useState<MeetingPlace[]>([]);
   const [nearbyUsers, setNearbyUsers] = useState<NearbyUser[]>([]);
   const [loadingLocation, setLoadingLocation] = useState(true);
@@ -66,7 +69,7 @@ export default function GeolocationMeeting() {
   });
   const mapRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [meetingPlace, setMeetingPlace] = useState<Location | null>(null);
+  const [meetingPlace, setMeetingPlace] = useState<[number, number] | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>([0, 0]);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();

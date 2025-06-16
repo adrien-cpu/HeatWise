@@ -11,12 +11,13 @@ import { useToast } from '@/hooks/use-toast';
 import dynamic from 'next/dynamic';
 import { drawConnectors, drawLandmarks } from '@mediapipe/drawing_utils';
 import { FACEMESH_TESSELATION } from '@mediapipe/face_mesh';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Import MediaPipe components dynamically
-const MediaPipeComponents = dynamic(() => import('@/components/facial-analysis/MediaPipeComponents'), {
-    ssr: false,
-    loading: () => <div>Loading...</div>
-});
+// Chargement dynamique des composants MediaPipe
+const MediaPipeComponents = dynamic(
+    () => import('@/components/facial-analysis/MediaPipeComponents'),
+    { ssr: false }
+);
 
 export default function FacialAnalysisPage() {
     const t = useTranslations('FacialAnalysis');
@@ -29,6 +30,7 @@ export default function FacialAnalysisPage() {
     const [compatibilityScore, setCompatibilityScore] = useState<CompatibilityScore | null>(null);
     const [stream, setStream] = useState<MediaStream | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
+    const { user } = useAuth();
 
     useEffect(() => {
         return () => {
