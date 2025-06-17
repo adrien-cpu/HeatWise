@@ -74,7 +74,19 @@ if (!criticalConfigError) {
   });
 }
 
-const app = initializeApp(firebaseConfig);
+let app;
+try {
+  if (!criticalConfigError) {
+    app = initializeApp(firebaseConfig);
+    console.log("[Firebase Init] Firebase app initialized successfully");
+  } else {
+    throw new Error("Firebase configuration is incomplete");
+  }
+} catch (error) {
+  console.error("[Firebase Init] Error initializing Firebase:", error);
+  throw error;
+}
+
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
