@@ -88,6 +88,7 @@ try {
 }
 
 export const db = getFirestore(app);
+export const firestore = db; // Alias pour la compatibilité
 export const storage = getStorage(app);
 export const auth = getAuth(app);
 

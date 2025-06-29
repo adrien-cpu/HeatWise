@@ -14,7 +14,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from '@/i18n';
 import { AuthProvider } from '@/contexts/AuthContext';
-import '../app/globals.css'
+import './globals.css'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -41,6 +41,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
+      <head />
       <body className={`${GeistSans.className} ${inter.className} min-h-screen bg-background font-sans antialiased`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeProvider

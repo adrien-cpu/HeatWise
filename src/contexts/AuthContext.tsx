@@ -80,3 +80,9 @@ export function useAuth() {
   if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }
+
+/**
+ * @function useAuthContext
+ * @description Alias for useAuth to maintain compatibility
+ */
+export const useAuthContext = useAuth;

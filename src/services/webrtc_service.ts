@@ -252,10 +252,22 @@ export async function sendSignalingMessageViaFirestore(
       }, { merge: true }); // Create doc if it doesn't exist
     } else {
       // For offer, answer, hangup, set/overwrite the specific field
-      await setDoc(signalingDocRef, {
-        [message.type]: payload, // This will store the full message under its type, e.g., { offer: { senderId: ..., sdp: ..., ... } }
-        [`lastActivity.${senderId}`]: serverTimestamp()
-      }, { merge: true });
+      if (message.type === 'offer') {
+        await updateDoc(signalingDocRef, {
+          offer: payload,
+          [`lastActivity.${senderId}`]: serverTimestamp()
+        });
+      } else if (message.type === 'answer') {
+        await updateDoc(signalingDocRef, {
+          answer: payload,
+          [`lastActivity.${senderId}`]: serverTimestamp()
+        });
+      } else if (message.type === 'hangup') {
+        await updateDoc(signalingDocRef, {
+          hangup: payload,
+          [`lastActivity.${senderId}`]: serverTimestamp()
+        });
+      }
     }
   } catch (error) {
     console.error("WebRTCService: Error sending signaling message via Firestore:", error);
@@ -392,20 +404,32 @@ export async function closeWebRTCConnection(rtcConnection: RTCConnection | null)
  */
 export async function initializeSignalingChannel(channelId: string): Promise<void> {
   if (criticalConfigError) throw new Error("Firebase not configured for WebRTC.");
-  const signalingDocRef = doc(firestore, signalingCollectionName, channelId);
-  try {
-    const docSnap = await getDoc(signalingDocRef);
-    if (!docSnap.exists()) {
-      await setDoc(signalingDocRef, {
-        createdAt: serverTimestamp(),
-        status: 'initiating', // Initial status
-        candidates: {}, // To store candidates from each user
-        lastActivity: {} // To store last activity timestamp from each user
-      });
-      console.log("WebRTCService: Signaling channel initialized:", channelId);
-    }
-  } catch (error) {
-    console.error("WebRTCService: Error initializing signaling channel:", error);
-  }
+  console.log("WebRTCService: Initializing signaling channel:", channelId);
+  const channelRef = doc(firestore, signalingCollectionName, channelId);
+  const channelData = {
+    initialized: serverTimestamp(),
+    createdAt: serverTimestamp(),
+    status: 'initiating'
+  };
+  await setDoc(channelRef, channelData, { merge: true });
+  console.log("WebRTCService: Signaling channel initialized.");
+}
+
+/**
+ * WebRTCService class for compatibility with existing imports
+ */
+export class WebRTCService {
+  static initializePeerConnection = initializePeerConnection;
+  static getLocalStream = getLocalStream;
+  static addLocalStreamToPeerConnection = addLocalStreamToPeerConnection;
+  static createOfferSdp = createOfferSdp;
+  static createAnswerSdp = createAnswerSdp;
+  static setRemoteSdp = setRemoteSdp;
+  static addIceCandidate = addIceCandidate;
+  static sendSignalingMessageViaFirestore = sendSignalingMessageViaFirestore;
+  static listenForSignalingMessagesFromFirestore = listenForSignalingMessagesFromFirestore;
+  static closeWebRTCConnection = closeWebRTCConnection;
+  static initializeSignalingChannel = initializeSignalingChannel;
+  static getSignalingChannelId = getSignalingChannelId;
 }
 

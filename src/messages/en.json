@@ -89,7 +89,14 @@
     "logoutErrorDesc": "An error occurred while logging out. Please try again.",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
-    "forgotPasswordLink": "Forgot password?"
+    "forgotPasswordLink": "Forgot password?",
+    "loginLink": "Login",
+    "forgotPasswordTitle": "Forgot Password",
+    "forgotPasswordDescription": "Enter your email address to receive a reset link.",
+    "sendResetEmailButton": "Send Reset Email",
+    "rememberPasswordPrompt": "Remember your password?",
+    "configErrorTitle": "Configuration Error",
+    "firebaseConfigErrorUserFriendly": "The application is not properly configured to connect to our services. Please try again later or contact support if the problem persists."
   },
   "GeolocationMeeting": {
     "title": "Find Nearby Connections",
@@ -164,6 +171,10 @@
     "photoModerationFailed": "Your photo could not be processed due to moderation issues:",
     "inputModerationFailed": "Your photo input could not be processed due to moderation policy. Issues: "
   },
+  "FacialAnalysis": {
+    "title": "Facial Analysis",
+    "description": "Analyze your face for psychological insights"
+  },
   "AIConversationCoachPage": {
     "pageTitle": "AI Conversation Coach",
     "pageDescription": "Get personalized tips and style suggestions to improve your conversations.",
@@ -229,7 +240,12 @@
     "partnerPhotoAlt": "Partner's profile picture"
   },
   "Game": {
-    "title": "Games Hub",
+    "title": "Games",
+    "description": "Play fun games to connect",
+    "refreshRankings": "Refresh Rankings",
+    "rank": "Rank",
+    "player": "Player",
+    "points": "Points",
     "randomPartner": "Play with Random Partner",
     "matchPartner": "Play with Match",
     "question": "Question",
